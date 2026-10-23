@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1D5C7A">
+<meta name="description" content="Clasificación de suelos SUCS (ASTM D2487) y AASHTO M 145 sin conexión">
+<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:0}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Clasificador de Suelos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: hoja de laboratorio — columna de datos de ensayo a la izquierda, resultados a la derecha; en teléfono una sola columna con barra de resultado fija abajo */
+:root{
+  --bg:#EEF2F1; --surface:#FFFFFF; --sunk:#F5F7F6; --ink:#17201E; --muted:#56655F; --line:#D3DCD8;
+  --accent:#1D5C7A; --accent-ink:#FFFFFF; --accent-soft:#DDEBF1;
+  --hi:#B4650F; --ok:#2B7A4B; --ok-soft:#E1F1E6; --bad:#B03838; --bad-soft:#F7E3E3; --warn:#8A5D00; --warn-soft:#FBF0D6;
+  --gravel:#7B6B58; --sand:#C9A23A; --fines:#3E7C76;
+  --chart-grid:#E4EAE7; --zone:#EEF3F1;
+  --f-disp:"Barlow Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1514; --surface:#171F1D; --sunk:#121917; --ink:#E3EAE7; --muted:#93A39E; --line:#2A3633;
+  --accent:#6DB2D3; --accent-ink:#0B1A21; --accent-soft:#18323E;
+  --hi:#E8A04B; --ok:#62BC86; --ok-soft:#15301F; --bad:#E57A7A; --bad-soft:#3A1C1C; --warn:#E0B24A; --warn-soft:#33290F;
+  --gravel:#A8957F; --sand:#D8B652; --fines:#64ADA6;
+  --chart-grid:#222D2A; --zone:#1B2523; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1514; --surface:#171F1D; --sunk:#121917; --ink:#E3EAE7; --muted:#93A39E; --line:#2A3633;
+  --accent:#6DB2D3; --accent-ink:#0B1A21; --accent-soft:#18323E;
+  --hi:#E8A04B; --ok:#62BC86; --ok-soft:#15301F; --bad:#E57A7A; --bad-soft:#3A1C1C; --warn:#E0B24A; --warn-soft:#33290F;
+  --gravel:#A8957F; --sand:#D8B652; --fines:#64ADA6;
+  --chart-grid:#222D2A; --zone:#1B2523; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* ---------- Cabecera ---------- */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px))) 0;padding:10px max(16px,env(safe-area-inset-left,0px)) 8px;border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:center;gap:12px;max-width:1240px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.mark{width:36px;height:36px;border-radius:8px;background:var(--accent);flex:none;display:grid;place-items:center}
+.mark svg{width:26px;height:26px}
+.brand h1{font-family:var(--f-disp);font-weight:700;font-size:22px;letter-spacing:.01em;margin:0;line-height:1;text-wrap:balance}
+.brand small{display:block;font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;height:36px;min-width:36px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font-size:13px;font-weight:500}
+.iconbtn svg{width:18px;height:18px}
+.iconbtn:hover{border-color:var(--accent)}
+.chips{display:flex;gap:6px;overflow-x:auto;max-width:1240px;margin:8px auto 0;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips span{font-family:var(--f-mono);font-size:11px;color:var(--muted);align-self:center;letter-spacing:.06em;text-transform:uppercase;flex:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.chip b{font-family:var(--f-mono);font-weight:500;color:var(--accent)}
+.chip:hover{border-color:var(--accent)}
+
+/* ---------- Estructura ---------- */
+.wrap{max-width:1240px;margin:16px auto 0;display:grid;gap:16px}
+@media (min-width:980px){.wrap{grid-template-columns:minmax(360px,420px) 1fr;align-items:start}
+  .col-in{position:sticky;top:calc(env(safe-area-inset-top,0px) + 100px);max-height:calc(100vh - 116px);overflow:auto;padding-right:4px}
+  body{padding-bottom:24px}.dock{display:none!important}}
+.col-in,.col-out{display:grid;gap:14px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;min-width:0}
+.ph{display:flex;align-items:baseline;gap:8px;margin:0 0 12px;flex-wrap:wrap}
+.ph .n{font-family:var(--f-mono);font-size:11px;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 5px;line-height:18px}
+.ph h2{font-family:var(--f-disp);font-weight:600;font-size:18px;letter-spacing:.03em;text-transform:uppercase;margin:0}
+.ph .ref{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-left:auto}
+
+/* ---------- Campos ---------- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:grid;gap:4px;min-width:0}
+.field label,.lbl{font-size:12px;color:var(--muted);font-weight:500}
+.field input,.field select{width:100%;height:40px;border:1px solid var(--line);border-radius:7px;background:var(--sunk);padding:0 10px;font-family:var(--f-mono);font-size:15px}
+.field input:focus{border-color:var(--accent);background:var(--surface);outline:none}
+.field input.bad{border-color:var(--bad);background:var(--bad-soft)}
+.field input:disabled{opacity:.45}
+.field.txt input{font-family:var(--f-body)}
+
+table.sv{width:100%;border-collapse:collapse;font-size:14px}
+table.sv th{font-size:11px;font-weight:500;color:var(--muted);text-align:left;padding:0 6px 6px;text-transform:uppercase;letter-spacing:.06em}
+table.sv td{padding:3px 6px;border-top:1px solid var(--line)}
+table.sv td:first-child{font-weight:600;white-space:nowrap}
+table.sv td.mm{font-family:var(--f-mono);color:var(--muted);font-size:13px}
+table.sv input{width:100%;max-width:110px;height:36px;border:1px solid var(--line);border-radius:6px;background:var(--sunk);padding:0 8px;font-family:var(--f-mono);font-size:15px;text-align:right}
+table.sv input:focus{border-color:var(--accent);background:var(--surface);outline:none}
+table.sv input.bad{border-color:var(--bad);background:var(--bad-soft)}
+.req{font-family:var(--f-mono);font-size:10px;color:var(--accent);margin-left:4px;letter-spacing:.04em}
+tr.extra[hidden]{display:none}
+.linkbtn{background:none;border:0;color:var(--accent);font-weight:500;font-size:13px;cursor:pointer;padding:8px 0 0}
+
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:8px;padding:3px;background:var(--sunk);gap:3px}
+.seg button{border:0;background:transparent;border-radius:6px;height:32px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.sub{border-top:1px dashed var(--line);margin-top:14px;padding-top:12px;display:grid;gap:10px}
+.sub h3{font-size:13px;font-weight:600;margin:0}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kv div{background:var(--sunk);border-radius:7px;padding:7px 9px;min-width:0}
+.kv b{display:block;font-family:var(--f-mono);font-size:15px;font-weight:500}
+.kv span{font-size:11px;color:var(--muted)}
+.check{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--sunk)}
+.check input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+.check b{font-size:13.5px;font-weight:600;display:block}
+.check span{font-size:12px;color:var(--muted)}
+.tog{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer}
+.tog input{width:18px;height:18px;accent-color:var(--accent)}
+
+/* ---------- Fracciones ---------- */
+.bar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--sunk);margin-top:2px}
+.bar i{display:block;height:100%;transition:width .25s}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12.5px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend b{font-family:var(--f-mono);font-weight:500}
+
+/* ---------- Resultados ---------- */
+.res{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:700px){.res{grid-template-columns:1fr 1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;min-width:0;display:grid;gap:10px;align-content:start}
+.card.main{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.sym{font-family:var(--f-disp);font-weight:700;font-size:54px;line-height:.95;letter-spacing:.01em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.sym small{font-size:.42em;font-weight:600;color:var(--muted);margin-left:6px}
+.gname{font-size:17px;font-weight:600;line-height:1.3}
+.gname em{display:block;font-style:normal;font-size:13px;font-weight:400;color:var(--muted);margin-top:2px}
+.facts{display:grid;gap:4px;font-size:13px;border-top:1px solid var(--line);padding-top:8px}
+.facts div{display:flex;justify-content:space-between;gap:10px}
+.facts span{color:var(--muted)}
+.facts b{font-weight:600;text-align:right}
+.steps{margin:0;padding:10px 12px 10px 28px;background:var(--sunk);border-radius:8px;font-size:12.5px;display:grid;gap:4px}
+.steps li{white-space:pre-wrap;font-family:var(--f-mono);font-size:12px}
+.msg{font-size:13px;border-radius:8px;padding:8px 10px;display:flex;gap:8px}
+.msg.warn{background:var(--warn-soft);color:var(--warn)}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.msgs{display:grid;gap:6px}
+.msgs:empty{display:none}
+
+/* ---------- Gráficos ---------- */
+.chartbox{width:100%;max-width:620px;margin:0 auto;overflow:hidden}
+svg.ch{width:100%;height:auto;display:block;touch-action:none;user-select:none}
+svg.ch text{font-family:var(--f-mono);fill:var(--muted);font-size:9px}
+svg.ch .zl{font-family:var(--f-disp);font-weight:600;font-size:12px;fill:var(--ink);opacity:.7}
+.chart-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.chart-head .pt{margin-left:auto;font-family:var(--f-mono);font-size:12px;background:var(--accent-soft);color:var(--accent);padding:3px 8px;border-radius:6px}
+.hint{font-size:12px;color:var(--muted);margin:2px 0 0}
+
+/* ---------- Matriz AASHTO ---------- */
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table.mx{border-collapse:collapse;font-size:12px;min-width:760px;width:100%}
+table.mx th,table.mx td{padding:6px 5px;text-align:center;border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap}
+table.mx th{font-family:var(--f-mono);font-weight:500;background:var(--sunk)}
+table.mx th:first-child,table.mx td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);font-family:var(--f-body);font-weight:600;z-index:1}
+table.mx th:first-child{background:var(--sunk)}
+table.mx td{font-family:var(--f-mono)}
+td.y{color:var(--ok)} td.n{color:var(--bad);text-decoration:line-through;text-decoration-thickness:1px} td.q{color:var(--warn)} td.na{color:var(--muted)}
+table.mx .sel{background:var(--accent-soft)}
+table.mx th.sel{background:var(--accent);color:var(--accent-ink)}
+.st{font-family:var(--f-body);font-size:11px}
+.st.pass{font-weight:700;color:var(--accent)}
+
+/* ---------- Acciones e historial ---------- */
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface);padding:0 14px;font-weight:600;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn svg{width:17px;height:17px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:hover{border-color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.hist{display:grid;gap:6px;margin-top:10px}
+.hrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--sunk)}
+.hrow b{font-size:13.5px}
+.hrow .mono{font-size:12.5px;color:var(--accent)}
+.hrow small{display:block;color:var(--muted);font-size:11.5px}
+.hrow .acts{display:flex;gap:4px}
+.hrow button{border:1px solid var(--line);background:var(--surface);border-radius:6px;height:30px;padding:0 8px;font-size:12px;cursor:pointer}
+.empty{font-size:13px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px}
+.foot{font-size:11.5px;color:var(--muted);max-width:1240px;margin:18px auto 0;line-height:1.5}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:8px;font-size:13px;z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+textarea.fallback{width:100%;height:120px;font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border-radius:8px;background:var(--sunk);padding:8px;margin-top:8px}
+
+/* ---------- Barra inferior (teléfono) ---------- */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:center}
+.dock div{min-width:0}
+.dock span{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;color:var(--muted)}
+.dock b{display:block;font-family:var(--f-disp);font-size:24px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock a{height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:8px;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:600;font-size:13.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media (max-width:380px){.sym{font-size:44px}.kv{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="top-row">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 26 26" fill="none"><path d="M3 23V3M3 23h20" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M7 21L23 8" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M11 21V5" stroke="#fff" stroke-width="1.4" stroke-dasharray="2 2"/><circle cx="17" cy="13" r="2.4" fill="#F2B45E"/></svg>
+      </div>
+      <div style="min-width:0"><h1>Clasificador de Suelos</h1><small>ASTM D2487 · AASHTO M 145</small></div>
+    </div>
+    <button class="iconbtn" id="btnTheme" type="button" aria-label="Cambiar tema claro u oscuro" title="Tema">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="iconbtn" id="btnNew" type="button" title="Nueva muestra">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>Nueva</span>
+    </button>
+  </div>
+  <div class="chips" id="examples"><span>Ejemplos</span></div>
+</header>
+
+<main class="wrap">
+  <section class="col-in" aria-label="Datos de ensayo">
+
+    <div class="panel">
+      <div class="ph"><span class="n">01</span><h2>Muestra</h2></div>
+      <div class="grid2">
+        <div class="field txt"><label for="mId">Identificación</label><input id="mId" placeholder="M-01"></div>
+        <div class="field txt"><label for="mDate">Fecha</label><input id="mDate" type="date"></div>
+        <div class="field txt" style="grid-column:1/-1"><label for="mLoc">Proyecto / ubicación</label><input id="mLoc" placeholder="Ruta, estación, sondeo"></div>
+        <div class="field"><label for="mDepth">Profundidad (m)</label><input id="mDepth" inputmode="decimal" placeholder="0.0–1.5"></div>
+        <div class="field txt"><label for="mObs">Observación</label><input id="mObs" placeholder="Color, humedad…"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><span class="n">02</span><h2>Granulometría</h2><span class="ref">ASTM D6913 · % que pasa</span></div>
+      <table class="sv" id="sieveTable">
+        <thead><tr><th>Tamiz</th><th>Abertura (mm)</th><th style="text-align:right">% pasa</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button class="linkbtn" id="btnMore" type="button" aria-expanded="false">Mostrar todos los tamices (curva y D10/D30/D60)</button>
+
+      <div class="sub">
+        <div class="lbl">Fracciones (SUCS, sobre material &lt; 75 mm)</div>
+        <div class="bar" id="fbar"><i style="background:var(--gravel)"></i><i style="background:var(--sand)"></i><i style="background:var(--fines)"></i></div>
+        <div class="legend" id="flegend"></div>
+      </div>
+
+      <div class="sub">
+        <h3>Coeficientes de graduación <span class="lbl" style="font-weight:400">— necesarios si finos ≤ 12 %</span></h3>
+        <div class="seg" role="group" aria-label="Origen de Cu y Cc">
+          <button type="button" id="cMan" aria-pressed="true">Ingresar Cu y Cc</button>
+          <button type="button" id="cCurve" aria-pressed="false">Desde la curva</button>
+        </div>
+        <div class="grid2" id="cuManual">
+          <div class="field"><label for="cu">Cu = D60/D10</label><input id="cu" inputmode="decimal"></div>
+          <div class="field"><label for="cc">Cc = D30²/(D10·D60)</label><input id="cc" inputmode="decimal"></div>
+        </div>
+        <div id="cuCurve" hidden>
+          <div class="kv" id="dvals"></div>
+          <p class="hint" id="dnote"></p>
+        </div>
+        <div class="chartbox"><svg class="ch" id="gradChart" viewBox="0 0 360 200" role="img" aria-label="Curva granulométrica"></svg></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><span class="n">03</span><h2>Límites de Atterberg</h2><span class="ref">ASTM D4318 · fracción &lt; N.º 40</span></div>
+      <div style="display:grid;gap:10px">
+        <label class="tog"><input type="checkbox" id="np"> Material no plástico (NP)</label>
+        <div class="seg" role="group" aria-label="Forma de ingresar plasticidad">
+          <button type="button" id="mPI" aria-pressed="true">Ingresar IP</button>
+          <button type="button" id="mPL" aria-pressed="false">Ingresar LP</button>
+        </div>
+        <div class="grid2">
+          <div class="field"><label for="ll">Límite líquido, LL</label><input id="ll" inputmode="decimal"></div>
+          <div class="field" id="fPI"><label for="pi">Índice de plasticidad, IP</label><input id="pi" inputmode="decimal"></div>
+          <div class="field" id="fPL" hidden><label for="pl">Límite plástico, LP</label><input id="pl" inputmode="decimal"></div>
+        </div>
+        <div class="kv">
+          <div><span id="kvAltLbl">LP calculado</span><b id="kvAlt">—</b></div>
+          <div><span>Línea A (IP)</span><b id="kvA">—</b></div>
+          <div><span>Línea U (IP)</span><b id="kvU">—</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><span class="n">04</span><h2>Condiciones especiales</h2></div>
+      <div style="display:grid;gap:8px">
+        <label class="check"><input type="checkbox" id="peat"><div><b>Suelo altamente orgánico (turba)</b><span>Textura fibrosa, color oscuro, olor orgánico → Pt y A-8.</span></div></label>
+        <div class="grid2">
+          <div class="field"><label for="llOven">LL secado al horno (opcional)</label><input id="llOven" inputmode="decimal"></div>
+          <div class="field"><label>Relación LL<sub>horno</sub>/LL</label><div class="mono" id="ovenRatio" style="height:40px;display:flex;align-items:center;font-size:15px">—</div></div>
+        </div>
+        <label class="check"><input type="checkbox" id="organic"><div><b>Finos orgánicos (OL / OH)</b><span>Se marca solo si LL<sub>horno</sub>/LL &lt; 0.75; puede marcarse manualmente.</span></div></label>
+        <label class="check"><input type="checkbox" id="cobbles"><div><b>Contiene cantos o bolones (&gt; 75 mm)</b><span>Agrega «con cantos o bolones» al nombre de grupo.</span></div></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="col-out" id="results" aria-label="Resultados">
+    <div class="msgs" id="globalMsgs"></div>
+    <div class="res">
+      <article class="card main" id="cardSucs">
+        <div class="tag">SUCS · ASTM D2487</div>
+        <div class="sym" id="sSym">—</div>
+        <div class="gname" id="sName">Ingrese datos</div>
+        <div class="facts" id="sFacts"></div>
+        <ol class="steps" id="sSteps"></ol>
+        <div class="msgs" id="sMsgs"></div>
+      </article>
+      <article class="card" id="cardAashto">
+        <div class="tag">AASHTO M 145</div>
+        <div class="sym" id="aSym">—</div>
+        <div class="gname" id="aName"></div>
+        <div class="facts" id="aFacts"></div>
+        <ol class="steps" id="aSteps"></ol>
+        <div class="msgs" id="aMsgs"></div>
+      </article>
+    </div>
+
+    <div class="panel">
+      <div class="chart-head">
+        <div class="ph" style="margin:0"><h2>Carta de plasticidad</h2></div>
+        <label class="tog" style="font-weight:500"><input type="checkbox" id="ovAashto"> Límites AASHTO</label>
+        <span class="pt" id="ptLabel">—</span>
+      </div>
+      <div class="chartbox"><svg class="ch" id="plChart" viewBox="0 0 360 250" role="img" aria-label="Carta de plasticidad de Casagrande"></svg></div>
+      <p class="hint">Toque o arrastre sobre la carta para fijar LL e IP.</p>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><h2>Matriz AASHTO</h2><span class="ref">evaluación de izquierda a derecha</span></div>
+      <div class="tblwrap"><table class="mx" id="matrix"></table></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><h2>Reporte e historial</h2></div>
+      <div class="actions">
+        <button class="btn pri" id="btnCopy" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copiar reporte</button>
+        <button class="btn" id="btnSave" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg>Guardar muestra</button>
+        <button class="btn" id="btnCsv" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Exportar CSV</button>
+        <button class="btn" id="btnCsvCopy" type="button">Copiar CSV</button>
+      </div>
+      <div id="fallbackBox"></div>
+      <div class="hist" id="hist"></div>
+    </div>
+  </section>
+</main>
+
+<p class="foot">Herramienta de apoyo. La clasificación se basa en los criterios de ASTM D2487 (SUCS) y AASHTO M 145; los porcentajes se refieren a la fracción menor que 75 mm. Verifique los datos de laboratorio y la identificación visual-manual (ASTM D2488) antes de usar el resultado en informes.</p>
+
+<nav class="dock" aria-label="Resultado actual">
+  <div><span>SUCS</span><b id="dS">—</b></div>
+  <div><span>AASHTO</span><b id="dA">—</b></div>
+  <a href="#results">Ver</a>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/*
+ * Motor de clasificación de suelos
+ *  - SUCS / USCS  : ASTM D2487 (símbolo y nombre de grupo)
+ *  - AASHTO       : AASHTO M 145 (grupo, subgrupo e índice de grupo)
+ *
+ * Convenciones de entrada (todas en %, referidas a la fracción < 75 mm):
+ *   p4, p10, p40, p200 : % que pasa N.º 4, 10, 40, 200
+ *   ll, pi             : límite líquido e índice de plasticidad
+ *   np                 : true si el material es no plástico
+ *   cu, cc             : coeficientes de uniformidad y curvatura
+ *   organic            : finos orgánicos (LL secado / LL no secado < 0.75)
+ *   peat               : suelo altamente orgánico (turba)
+ *   cobbles            : la muestra de campo contenía cantos o bolones
+ */
+(function (root) {
+  'use strict';
+
+  const aLine = (ll) => 0.73 * (ll - 20);
+  const uLine = (ll) => 0.9 * (ll - 8);
+  const isNum = (v) => typeof v === 'number' && isFinite(v);
+  const f1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
+  const f2 = (x) => (Math.round(x * 100) / 100).toFixed(2);
+
+  /* ---------------------------------------------------------------
+   * Plasticidad de los finos (carta de Casagrande, ASTM D2487)
+   * ------------------------------------------------------------- */
+  function finesType(ll, pi) {
+    const above = pi >= aLine(ll);
+    if (ll < 50) {
+      if (pi > 7 && above) return 'CL';
+      if (pi >= 4 && pi <= 7 && above) return 'CL-ML';
+      return 'ML';
+    }
+    return above ? 'CH' : 'MH';
+  }
+
+  const FINE = {
+    CL: { en: 'lean clay', es: 'Arcilla magra', g: 'f' },
+    'CL-ML': { en: 'silty clay', es: 'Arcilla limosa', g: 'f' },
+    ML: { en: 'silt', es: 'Limo', g: 'm' },
+    CH: { en: 'fat clay', es: 'Arcilla grasa', g: 'f' },
+    MH: { en: 'elastic silt', es: 'Limo elástico', g: 'm' },
+    OC: { en: 'organic clay', es: 'Arcilla orgánica', g: 'f' },
+    OS: { en: 'organic silt', es: 'Limo orgánico', g: 'm' },
+  };
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function fineName(key, G, S, F) {
+    const b = FINE[key];
+    const R = 100 - F;
+    const sandy = b.g === 'f' ? 'arenosa' : 'arenoso';
+    const grav = b.g === 'f' ? 'gravosa' : 'gravoso';
+    if (R < 15) return { en: cap(b.en), es: b.es, rule: '% retenido N.º 200 < 15' };
+    if (R < 30) {
+      return S >= G
+        ? { en: cap(b.en) + ' with sand', es: b.es + ' con arena', rule: '15 ≤ % ret. N.º 200 < 30; arena ≥ grava' }
+        : { en: cap(b.en) + ' with gravel', es: b.es + ' con grava', rule: '15 ≤ % ret. N.º 200 < 30; arena < grava' };
+    }
+    if (S >= G) {
+      return {
+        en: 'Sandy ' + b.en + (G >= 15 ? ' with gravel' : ''),
+        es: b.es + ' ' + sandy + (G >= 15 ? ' con grava' : ''),
+        rule: '% ret. N.º 200 ≥ 30; arena ≥ grava; grava ' + (G >= 15 ? '≥' : '<') + ' 15 %',
+      };
+    }
+    return {
+      en: 'Gravelly ' + b.en + (S >= 15 ? ' with sand' : ''),
+      es: b.es + ' ' + grav + (S >= 15 ? ' con arena' : ''),
+      rule: '% ret. N.º 200 ≥ 30; arena < grava; arena ' + (S >= 15 ? '≥' : '<') + ' 15 %',
+    };
+  }
+
+  /* ---------------------------------------------------------------
+   * SUCS — ASTM D2487
+   * ------------------------------------------------------------- */
+  function sucs(inp) {
+    const steps = [];
+    const warn = [];
+    const out = { ok: false, symbol: '—', es: '', en: '', steps, warn };
+    const { p4, p200, peat, organic, cobbles } = inp;
+    let { ll, pi, np, cu, cc } = inp;
+
+    if (peat) {
+      steps.push('Suelo altamente orgánico: materia orgánica dominante, color oscuro, olor orgánico.');
+      return Object.assign(out, { ok: true, symbol: 'Pt', es: 'Turba', en: 'Peat', family: 'peat' });
+    }
+    if (!isNum(p4) || !isNum(p200)) {
+      warn.push('Se requieren el % que pasa N.º 4 y N.º 200.');
+      return out;
+    }
+    if (p200 > p4) {
+      warn.push('El % que pasa N.º 200 no puede superar al de N.º 4.');
+      return out;
+    }
+    if (pi === 0) np = true;
+    if (np) pi = 0;
+
+    const G = 100 - p4, S = p4 - p200, F = p200;
+    out.fr = { G, S, F };
+    const plasticKnown = np || (isNum(ll) && isNum(pi));
+    if (np && !isNum(ll)) ll = 0; // NP sin LL: se ubica como ML (bajo la línea A)
+
+    /* ---- Grano fino ---- */
+    if (F >= 50) {
+      out.family = 'fine';
+      steps.push(`Finos = ${f1(F)} % ≥ 50 % → suelo de grano fino.`);
+      if (!plasticKnown) {
+        warn.push('Faltan LL e IP (o marque NP) para clasificar los finos.');
+        return out;
+      }
+      const A = aLine(ll);
+      const H = ll >= 50;
+      steps.push(`LL = ${f1(ll)} ${H ? '≥' : '<'} 50 → ${H ? 'alta' : 'baja'} plasticidad. IP = ${f1(pi)}; línea A: IP = 0.73(LL − 20) = ${f1(A)}.`);
+      let key, symbol;
+      if (organic) {
+        symbol = H ? 'OH' : 'OL';
+        const clayLike = H ? pi >= A : pi >= 4 && pi >= A;
+        key = clayLike ? 'OC' : 'OS';
+        steps.push(`Orgánico (LL secado/LL no secado < 0.75) → ${symbol}; ${clayLike ? 'sobre' : 'bajo'} la línea A → ${FINE[key].es.toLowerCase()}.`);
+      } else {
+        symbol = finesType(ll, pi);
+        key = symbol;
+        const pos = pi >= A ? 'sobre o en la línea A' : 'bajo la línea A';
+        if (symbol === 'CL-ML') steps.push(`4 ≤ IP ≤ 7 y ${pos} → CL-ML.`);
+        else if (symbol === 'ML' && ll < 50 && pi < 4) steps.push(`IP < 4 → ML.`);
+        else steps.push(`Punto ${pos} → ${symbol}.`);
+      }
+      const n = fineName(key, G, S, F);
+      steps.push(`Nombre: ${n.rule} (grava ${f1(G)} %, arena ${f1(S)} %).`);
+      Object.assign(out, { ok: true, symbol, es: n.es, en: n.en });
+      if (cobbles) { out.es += ' con cantos o bolones'; out.en += ' with cobbles or boulders'; }
+      return out;
+    }
+
+    /* ---- Grano grueso ---- */
+    out.family = 'coarse';
+    const isG = G > S;
+    const L = isG ? 'G' : 'S';
+    const noun = isG ? { es: 'Grava', en: 'gravel' } : { es: 'Arena', en: 'sand' };
+    const other = isG ? { v: S, es: 'arena', en: 'sand' } : { v: G, es: 'grava', en: 'gravel' };
+    steps.push(`Finos = ${f1(F)} % < 50 % → grano grueso. Grava ${f1(G)} % ${isG ? '>' : '≤'} arena ${f1(S)} % → ${isG ? 'GRAVA' : 'ARENA'}.`);
+
+    // Graduación
+    let W = null;
+    if (F <= 12) {
+      if (isNum(cu) && isNum(cc)) {
+        const cuMin = isG ? 4 : 6;
+        W = cu >= cuMin && cc >= 1 && cc <= 3;
+        steps.push(`Cu = ${f2(cu)} (${cu >= cuMin ? '≥' : '<'} ${cuMin}), Cc = ${f2(cc)} (${cc >= 1 && cc <= 3 ? 'entre 1 y 3' : 'fuera de 1–3'}) → ${W ? 'bien graduada (W)' : 'mal graduada (P)'}.`);
+      } else {
+        warn.push('Con finos ≤ 12 % se necesitan Cu y Cc (o D10, D30, D60) para distinguir W de P.');
+      }
+    }
+    const gr = W === null ? null : W ? 'W' : 'P';
+    const gAdj = W === null ? null : W ? { es: 'bien graduada', en: 'Well-graded' } : { es: 'mal graduada', en: 'Poorly graded' };
+
+    // Plasticidad de los finos (si F ≥ 5)
+    let ft = null;
+    if (F >= 5) {
+      if (!plasticKnown) {
+        warn.push('Con finos ≥ 5 % se requieren LL e IP (o NP) de la fracción fina.');
+        return out;
+      }
+      ft = finesType(ll, pi);
+      steps.push(`Finos ${np ? 'no plásticos' : `LL = ${f1(ll)}, IP = ${f1(pi)}`} → se clasifican como ${ft}.`);
+    }
+    const sfx = (pre) => (other.v >= 15 ? { es: ` ${pre.es} ${other.es}`, en: ` ${pre.en} ${other.en}` } : { es: '', en: '' });
+
+    let symbol, es, en;
+    if (F < 5) {
+      steps.push(`Finos < 5 % → suelo limpio.`);
+      const s = sfx({ es: 'con', en: 'with' });
+      if (gr) {
+        symbol = L + gr;
+        es = `${noun.es} ${gAdj.es}${s.es}`;
+        en = `${gAdj.en} ${noun.en}${s.en}`;
+      } else {
+        symbol = `${L}W / ${L}P`;
+        es = `${noun.es} (graduación por definir)${s.es}`;
+        en = `${cap(noun.en)} (grading undetermined)${s.en}`;
+      }
+    } else if (F <= 12) {
+      const fc = ft === 'ML' || ft === 'MH' ? 'M' : 'C';
+      steps.push(`5 % ≤ finos ≤ 12 % → símbolo doble; finos ${fc === 'M' ? 'limosos (ML/MH)' : 'arcillosos (CL/CH o CL-ML)'} → ${L}${fc}.`);
+      const fw = fc === 'M' ? { es: 'limo', en: 'silt' } : { es: 'arcilla (o arcilla limosa)', en: 'clay (or silty clay)' };
+      const tail = other.v >= 15 ? { es: ` y ${other.es}`, en: ` and ${other.en}` } : { es: '', en: '' };
+      if (gr) {
+        symbol = `${L}${gr}-${L}${fc}`;
+        es = `${noun.es} ${gAdj.es} con ${fw.es}${tail.es}`;
+        en = `${gAdj.en} ${noun.en} with ${fw.en}${tail.en}`;
+      } else {
+        symbol = `${L}W-${L}${fc} / ${L}P-${L}${fc}`;
+        es = `${noun.es} con ${fw.es}${tail.es} (graduación por definir)`;
+        en = `${cap(noun.en)} with ${fw.en}${tail.en} (grading undetermined)`;
+      }
+    } else {
+      const s = sfx({ es: 'con', en: 'with' });
+      if (ft === 'CL-ML') {
+        symbol = `${L}C-${L}M`;
+        es = `${noun.es} limo-arcillosa${s.es}`;
+        en = `Silty, clayey ${noun.en}${s.en}`;
+      } else if (ft === 'ML' || ft === 'MH') {
+        symbol = `${L}M`;
+        es = `${noun.es} limosa${s.es}`;
+        en = `Silty ${noun.en}${s.en}`;
+      } else {
+        symbol = `${L}C`;
+        es = `${noun.es} arcillosa${s.es}`;
+        en = `Clayey ${noun.en}${s.en}`;
+      }
+      steps.push(`Finos > 12 % → finos ${ft} → ${symbol}.`);
+    }
+    if (other.v >= 15) steps.push(`${cap(other.es)} = ${f1(other.v)} % ≥ 15 % → se agrega «con ${other.es}».`);
+    if (organic && F >= 5) {
+      es += ' con finos orgánicos';
+      en += ' with organic fines';
+      steps.push('Finos orgánicos → se agrega «con finos orgánicos».');
+    }
+    if (cobbles) { es += ' con cantos o bolones'; en += ' with cobbles or boulders'; }
+    Object.assign(out, { ok: true, symbol, es, en, finesType: ft, grading: gr });
+    if (gr === null && F <= 12) out.ok = 'partial';
+    return out;
+  }
+
+  /* ---------------------------------------------------------------
+   * AASHTO M 145
+   * ------------------------------------------------------------- */
+  // Cada criterio: [parámetro, operador, valor]. 'np' = no plástico.
+  const GROUPS = [
+    { id: 'A-1-a', c: [['p10', '<=', 50], ['p40', '<=', 30], ['p200', '<=', 15], ['pi', '<=', 6]] },
+    { id: 'A-1-b', c: [['p40', '<=', 50], ['p200', '<=', 25], ['pi', '<=', 6]] },
+    { id: 'A-3', c: [['p40', '>', 50], ['p200', '<=', 10], ['pi', 'np']] },
+    { id: 'A-2-4', c: [['p200', '<=', 35], ['ll', '<=', 40], ['pi', '<=', 10]] },
+    { id: 'A-2-5', c: [['p200', '<=', 35], ['ll', '>', 40], ['pi', '<=', 10]] },
+    { id: 'A-2-6', c: [['p200', '<=', 35], ['ll', '<=', 40], ['pi', '>', 10]] },
+    { id: 'A-2-7', c: [['p200', '<=', 35], ['ll', '>', 40], ['pi', '>', 10]] },
+    { id: 'A-4', c: [['p200', '>', 35], ['ll', '<=', 40], ['pi', '<=', 10]] },
+    { id: 'A-5', c: [['p200', '>', 35], ['ll', '>', 40], ['pi', '<=', 10]] },
+    { id: 'A-6', c: [['p200', '>', 35], ['ll', '<=', 40], ['pi', '>', 10]] },
+    { id: 'A-7-5', c: [['p200', '>', 35], ['ll', '>', 40], ['pi', '>', 10], ['pi', 'a75']] },
+    { id: 'A-7-6', c: [['p200', '>', 35], ['ll', '>', 40], ['pi', '>', 10], ['pi', 'a76']] },
+  ];
+
+  const INFO = {
+    'A-1': { mat: 'Fragmentos de roca, grava y arena', sub: 'Excelente a bueno' },
+    'A-3': { mat: 'Arena fina', sub: 'Excelente a bueno' },
+    'A-2': { mat: 'Grava y arena limosa o arcillosa', sub: 'Excelente a bueno' },
+    'A-4': { mat: 'Suelos limosos', sub: 'Regular a malo' },
+    'A-5': { mat: 'Suelos limosos', sub: 'Regular a malo' },
+    'A-6': { mat: 'Suelos arcillosos', sub: 'Regular a malo' },
+    'A-7': { mat: 'Suelos arcillosos', sub: 'Regular a malo' },
+    'A-8': { mat: 'Turba / suelo altamente orgánico', sub: 'Inadecuado' },
+  };
+  const family = (id) => id.slice(0, 3);
+
+  function critLabel(c) {
+    const [, op, v] = c;
+    if (op === 'np') return 'NP';
+    if (op === 'a75') return '≤ LL − 30';
+    if (op === 'a76') return '> LL − 30';
+    return (op === '<=' ? '≤ ' : '> ') + v;
+  }
+
+  // true / false / null (dato faltante)
+  function evalCrit(c, d) {
+    const [k, op, v] = c;
+    if (op === 'np') return d.np === true;
+    if (k === 'll' && d.ll === null) return op === '<=' ? true : false; // NP sin LL ("NL")
+    const x = d[k];
+    if (x === null || x === undefined || !isFinite(x)) return null;
+    if (op === 'a75') return x <= d.ll - 30;
+    if (op === 'a76') return x > d.ll - 30;
+    return op === '<=' ? x <= v : x > v;
+  }
+
+  function groupIndex(id, F, ll, pi) {
+    if (['A-1-a', 'A-1-b', 'A-3', 'A-2-4', 'A-2-5'].includes(id)) {
+      return { gi: 0, raw: 0, expr: 'IG = 0 (por definición para este grupo)' };
+    }
+    const LL = ll === null ? 40 : ll;
+    const t2 = 0.01 * (F - 15) * (pi - 10);
+    if (id === 'A-2-6' || id === 'A-2-7') {
+      const raw = t2;
+      return {
+        gi: raw < 0 ? 0 : Math.round(raw), raw,
+        expr: `IG = 0.01(F − 15)(IP − 10) = 0.01(${f1(F)} − 15)(${f1(pi)} − 10) = ${f2(raw)}`,
+      };
+    }
+    const t1 = (F - 35) * (0.2 + 0.005 * (LL - 40));
+    const raw = t1 + t2;
+    return {
+      gi: raw < 0 ? 0 : Math.round(raw), raw,
+      expr: `IG = (F − 35)[0.2 + 0.005(LL − 40)] + 0.01(F − 15)(IP − 10)\n   = (${f1(F)} − 35)[0.2 + 0.005(${f1(LL)} − 40)] + 0.01(${f1(F)} − 15)(${f1(pi)} − 10)\n   = ${f2(t1)} + ${f2(t2)} = ${f2(raw)}` + (ll === null ? '\n   (LL no determinable: se tomó LL − 40 = 0)' : ''),
+    };
+  }
+
+  function aashto(inp) {
+    const warn = [];
+    const steps = [];
+    let { p10, p40, p200, ll, pi, np, peat } = inp;
+    const out = { ok: false, group: '—', gi: null, label: '—', matrix: [], steps, warn };
+    if (peat) {
+      return Object.assign(out, { ok: true, group: 'A-8', label: 'A-8', info: INFO['A-8'], steps: ['Suelo altamente orgánico (turba) → A-8, clasificación por inspección visual.'] });
+    }
+    if (pi === 0) np = true;
+    if (np) pi = 0;
+    const d = {
+      p10: isNum(p10) ? p10 : null, p40: isNum(p40) ? p40 : null, p200: isNum(p200) ? p200 : null,
+      ll: isNum(ll) ? ll : null, pi: isNum(pi) ? pi : null, np: !!np,
+    };
+    if (d.p200 === null) { warn.push('Se requiere el % que pasa N.º 200.'); return out; }
+    if (!np && (d.ll === null || d.pi === null)) { warn.push('Faltan LL e IP (o marque NP).'); return out; }
+
+    const matrix = GROUPS.map((g) => ({ id: g.id, res: g.c.map((c) => ({ k: c[0], label: critLabel(c), ok: evalCrit(c, d) })) }));
+    out.matrix = matrix;
+
+    let found = null;
+    for (const row of matrix) {
+      const vals = row.res.map((r) => r.ok);
+      if (vals.includes(false)) { row.status = 'fail'; continue; }
+      if (vals.includes(null)) {
+        row.status = 'unknown';
+        const miss = row.res.filter((r) => r.ok === null).map((r) => ({ p10: 'N.º 10', p40: 'N.º 40' }[r.k] || r.k));
+        warn.push(`No se puede descartar ${row.id}: falta el % que pasa ${[...new Set(miss)].join(' y ')}.`);
+        break;
+      }
+      row.status = 'pass';
+      found = row.id;
+      break;
+    }
+    if (!found) {
+      if (!warn.length) warn.push('Ningún grupo cumple los criterios: revise los datos de entrada.');
+      return out;
+    }
+    const F = d.p200;
+    const g = groupIndex(found, F, d.ll, d.pi);
+    steps.push(`Evaluación de izquierda a derecha: el primer grupo que cumple todos los criterios es ${found}.`);
+    if (found.startsWith('A-7')) steps.push(`IP = ${f1(d.pi)} ${found === 'A-7-5' ? '≤' : '>'} LL − 30 = ${f1(d.ll - 30)} → ${found}.`);
+    steps.push(g.expr + (g.raw < 0 ? '  → negativo, se reporta 0' : `  → ${g.gi}`));
+    Object.assign(out, { ok: true, group: found, gi: g.gi, giRaw: g.raw, giExpr: g.expr, label: `${found}(${g.gi})`, info: INFO[family(found)] });
+    if (found.startsWith('A-1') || found === 'A-3') out.label = `${found}(0)`;
+    return out;
+  }
+
+  /* ---------------------------------------------------------------
+   * Utilidades de granulometría
+   * ------------------------------------------------------------- */
+  // points: [{d (mm), p (% pasa)}]; devuelve D para un % pasa dado (interp. log)
+  function dAt(points, P) {
+    const pts = points.filter((x) => isNum(x.p) && x.d > 0).sort((a, b) => b.d - a.d);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      if (a.p >= P && b.p <= P && a.p !== b.p) {
+        const t = (P - b.p) / (a.p - b.p);
+        return Math.pow(10, Math.log10(b.d) + t * (Math.log10(a.d) - Math.log10(b.d)));
+      }
+      if (a.p === P) return a.d;
+    }
+    return null;
+  }
+
+  function coefficients(points) {
+    const D10 = dAt(points, 10), D30 = dAt(points, 30), D60 = dAt(points, 60);
+    const cu = D10 && D60 ? D60 / D10 : null;
+    const cc = D10 && D30 && D60 ? (D30 * D30) / (D10 * D60) : null;
+    return { D10, D30, D60, cu, cc };
+  }
+
+  const api = { sucs, aashto, aLine, uLine, finesType, groupIndex, coefficients, dAt, GROUPS };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.SoilClass = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function(){
+'use strict';
+const C = window.SoilClass;
+const $ = (id) => document.getElementById(id);
+const fmt = (x, d=1) => (x===null||x===undefined||!isFinite(x)) ? '—' : (Math.round(x*10**d)/10**d).toFixed(d);
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const store = {
+  get(k, def){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; }catch(e){ return def; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const K_DRAFT='clasif-suelos:borrador', K_HIST='clasif-suelos:historial', K_THEME='clasif-suelos:tema';
+
+/* ---------- Tamices ---------- */
+const SIEVES = [
+  ['3"',75,0],['2"',50,0],['1½"',37.5,0],['1"',25,0],['¾"',19,0],['⅜"',9.5,0],
+  ['N.º 4',4.75,'SUCS'],['N.º 10',2.0,'AASHTO'],['N.º 20',0.85,0],['N.º 40',0.425,'AASHTO'],
+  ['N.º 60',0.25,0],['N.º 100',0.15,0],['N.º 200',0.075,'AMBOS']
+];
+const sid = (mm) => 's' + String(mm).replace('.','_');
+const tb = document.querySelector('#sieveTable tbody');
+tb.innerHTML = SIEVES.map(([n,mm,req]) =>
+  `<tr class="${req?'':'extra'}" ${req?'':'hidden'}><td>${n}${req?`<span class="req">${req}</span>`:''}</td><td class="mm">${mm}</td><td style="text-align:right"><input id="${sid(mm)}" inputmode="decimal" aria-label="% que pasa ${n}"></td></tr>`).join('');
+let showAll = false;
+$('btnMore').onclick = () => {
+  showAll = !showAll;
+  document.querySelectorAll('tr.extra').forEach(r => r.hidden = !showAll);
+  $('btnMore').textContent = showAll ? 'Mostrar solo los tamices requeridos' : 'Mostrar todos los tamices (curva y D10/D30/D60)';
+  $('btnMore').setAttribute('aria-expanded', showAll);
+};
+
+/* ---------- Estado de modos ---------- */
+let piMode = 'pi', cuMode = 'man';
+function setSeg(a, b, on){ $(a).setAttribute('aria-pressed', on); $(b).setAttribute('aria-pressed', !on); }
+$('mPI').onclick = () => { piMode='pi'; setSeg('mPI','mPL',true); $('fPI').hidden=false; $('fPL').hidden=true; update(); };
+$('mPL').onclick = () => { piMode='pl'; setSeg('mPI','mPL',false); $('fPI').hidden=true; $('fPL').hidden=false; update(); };
+$('cMan').onclick = () => { cuMode='man'; setSeg('cMan','cCurve',true); $('cuManual').hidden=false; $('cuCurve').hidden=true; update(); };
+$('cCurve').onclick = () => { cuMode='curve'; setSeg('cMan','cCurve',false); $('cuManual').hidden=true; $('cuCurve').hidden=false;
+  if(!showAll) $('btnMore').click(); update(); };
+
+function num(id){
+  const el = $(id); const v = el.value.trim().replace(',', '.');
+  if (v === '') { el.classList.remove('bad'); return null; }
+  const n = Number(v);
+  if (!isFinite(n)) { el.classList.add('bad'); return NaN; }
+  el.classList.remove('bad'); return n;
+}
+
+/* ---------- Lectura de datos ---------- */
+function read(){
+  const errs = [], warns = [];
+  const pts = SIEVES.map(([n,mm]) => ({ n, d:mm, p:num(sid(mm)) }));
+  pts.forEach(p => {
+    if (p.p !== null && (isNaN(p.p) || p.p < 0 || p.p > 100)) { $(sid(p.d)).classList.add('bad'); errs.push(`${p.n}: el % que pasa debe estar entre 0 y 100.`); }
+  });
+  const valid = pts.filter(p => p.p !== null && !isNaN(p.p) && p.p >= 0 && p.p <= 100);
+  for (let i=1;i<valid.length;i++) if (valid[i].p > valid[i-1].p + 1e-9) {
+    warns.push(`La curva no es monótona: ${valid[i].n} (${valid[i].p} %) supera a ${valid[i-1].n} (${valid[i-1].p} %).`);
+    $(sid(valid[i].d)).classList.add('bad');
+  }
+  const P = (mm) => { const x = valid.find(p => p.d === mm); return x ? x.p : null; };
+  const np = $('np').checked;
+  ['ll','pi','pl'].forEach(id => $(id).disabled = np && id !== 'll');
+  let ll = num('ll'), pi = null, pl = null;
+  if (!np) {
+    if (piMode === 'pi') { pi = num('pi'); if (isFinite(ll) && isFinite(pi) && ll!==null && pi!==null) pl = ll - pi; }
+    else { pl = num('pl'); if (ll!==null && pl!==null && isFinite(ll) && isFinite(pl)) pi = ll - pl; }
+  } else pi = 0;
+  if (ll !== null && (isNaN(ll) || ll < 0 || ll > 400)) { errs.push('LL fuera de rango.'); ll = null; }
+  if (pi !== null && !isNaN(pi)) {
+    if (pi < 0) { errs.push('El IP no puede ser negativo (LP > LL). Si el suelo no tiene plasticidad, marque NP.'); pi = null; }
+    else if (ll !== null && pi >= ll && !np) { errs.push('El IP debe ser menor que el LL.'); pi = null; }
+    else if (ll !== null && !np && pi > C.uLine(ll) + 0.5) warns.push(`El punto (LL ${fmt(ll)}, IP ${fmt(pi)}) queda sobre la línea U: límite superior empírico de suelos naturales. Revise los datos.`);
+  } else if (isNaN(pi)) pi = null;
+
+  // Cu, Cc
+  const co = C.coefficients(valid.map(p => ({d:p.d, p:p.p})));
+  let cu = null, cc = null;
+  if (cuMode === 'man') { cu = num('cu'); cc = num('cc'); if (isNaN(cu)) cu=null; if (isNaN(cc)) cc=null; }
+  else { cu = co.cu; cc = co.cc; }
+
+  // Orgánico por relación de LL
+  const llo = num('llOven'); let ratio = null;
+  if (llo !== null && !isNaN(llo) && ll) { ratio = llo / ll; }
+  $('ovenRatio').textContent = ratio === null ? '—' : `${fmt(ratio,2)} ${ratio < 0.75 ? '< 0.75 → orgánico' : '≥ 0.75 → inorgánico'}`;
+  $('ovenRatio').style.color = ratio !== null && ratio < 0.75 ? 'var(--hi)' : '';
+  if (ratio !== null && ratio < 0.75) $('organic').checked = true;
+
+  return { pts:valid, co, errs, warns,
+    inp:{ p4:P(4.75), p10:P(2.0), p40:P(0.425), p200:P(0.075), ll, pi, pl, np, cu, cc,
+      organic:$('organic').checked, peat:$('peat').checked, cobbles:$('cobbles').checked, nPts: valid.length } };
+}
+
+/* ---------- Render ---------- */
+function msgs(el, list, cls){ el.innerHTML = list.map(m => `<div class="msg ${cls}">${esc(m)}</div>`).join(''); }
+let last = null;
+
+function update(){
+  const r = read(); const i = r.inp;
+  const s = C.sucs(i), a = C.aashto(i);
+  last = { r, s, a };
+  msgs($('globalMsgs'), r.errs, 'err');
+
+  // Fracciones
+  const bars = $('fbar').children;
+  if (i.p4 !== null && i.p200 !== null && i.p200 <= i.p4) {
+    const G=100-i.p4, S=i.p4-i.p200, F=i.p200;
+    [G,S,F].forEach((v,k) => bars[k].style.width = v + '%');
+    $('flegend').innerHTML = [['Grava (> N.º 4)',G,'--gravel'],['Arena (N.º 4–N.º 200)',S,'--sand'],['Finos (< N.º 200)',F,'--fines']]
+      .map(([t,v,c]) => `<span><i style="background:var(${c})"></i>${t} <b>${fmt(v)} %</b></span>`).join('');
+  } else { [0,1,2].forEach(k => bars[k].style.width='0'); $('flegend').innerHTML = '<span style="color:var(--muted)">Ingrese % que pasa N.º 4 y N.º 200.</span>'; }
+
+  // Límites
+  $('kvAltLbl').textContent = piMode === 'pi' ? 'LP calculado' : 'IP calculado';
+  $('kvAlt').textContent = i.np ? 'NP' : fmt(piMode === 'pi' ? i.pl : i.pi);
+  $('kvA').textContent = i.ll !== null ? fmt(C.aLine(i.ll)) : '—';
+  $('kvU').textContent = i.ll !== null ? fmt(C.uLine(i.ll)) : '—';
+
+  // D-values
+  const co = r.co;
+  $('dvals').innerHTML = [['D10',co.D10,3],['D30',co.D30,3],['D60',co.D60,3],['Cu',co.cu,2],['Cc',co.cc,2]]
+    .map(([k,v,d]) => `<div><span>${k}${k[0]==='D'?' (mm)':''}</span><b>${fmt(v,d)}</b></div>`).join('');
+  $('dnote').textContent = co.D10 === null
+    ? 'D10 no se puede obtener: la curva no llega al 10 % que pasa con los tamices ingresados. Ingrese Cu y Cc manualmente si los conoce.'
+    : (i.nPts < 6 ? `Interpolación logarítmica con solo ${i.nPts} tamices: el resultado es aproximado.` : 'Interpolación logarítmica entre tamices adyacentes.');
+
+  // SUCS
+  $('sSym').textContent = s.symbol;
+  $('sName').innerHTML = s.ok ? `${esc(s.es)}<em>${esc(s.en)}</em>` : 'Datos incompletos';
+  $('sFacts').innerHTML = s.fr ? `
+    <div><span>Fracción</span><b>${s.family==='fine'?'Grano fino (F ≥ 50 %)':s.family==='coarse'?'Grano grueso (F < 50 %)':'—'}</b></div>
+    ${s.finesType?`<div><span>Finos clasifican como</span><b>${s.finesType}</b></div>`:''}
+    ${i.cu!==null&&s.family==='coarse'?`<div><span>Cu / Cc</span><b class="mono">${fmt(i.cu,2)} / ${fmt(i.cc,2)}</b></div>`:''}` : '';
+  $('sSteps').innerHTML = s.steps.map(t => `<li>${esc(t)}</li>`).join('');
+  $('sSteps').hidden = !s.steps.length;
+  msgs($('sMsgs'), s.warn.concat(r.warns), 'warn');
+
+  // AASHTO
+  if (a.ok) {
+    $('aSym').innerHTML = `${a.group}<small>(${a.gi ?? '—'})</small>`;
+    $('aName').innerHTML = `${esc(a.info.mat)}<em>Subrasante: ${esc(a.info.sub.toLowerCase())}</em>`;
+    $('aFacts').innerHTML = `
+      <div><span>Material</span><b>${i.p200!==null && i.p200>35 ? 'Limo-arcilloso (F > 35 %)' : 'Granular (F ≤ 35 %)'}</b></div>
+      ${a.giRaw!==undefined?`<div><span>IG calculado</span><b class="mono">${fmt(a.giRaw,2)} → ${a.gi}</b></div>`:''}`;
+  } else { $('aSym').textContent = '—'; $('aName').textContent = 'Datos incompletos'; $('aFacts').innerHTML = ''; }
+  $('aSteps').innerHTML = a.steps.map(t => `<li>${esc(t)}</li>`).join('');
+  $('aSteps').hidden = !a.steps.length;
+  msgs($('aMsgs'), a.warn, 'warn');
+
+  $('dS').textContent = s.symbol; $('dA').textContent = a.ok ? a.label : '—';
+  $('ptLabel').textContent = i.ll !== null ? `LL ${fmt(i.ll)} · IP ${i.np?'NP':fmt(i.pi)}` : '—';
+
+  drawPlasticity(i); drawGrad(r.pts, co); drawMatrix(a, i);
+  saveDraft();
+}
+
+/* ---------- Carta de plasticidad ---------- */
+const PL = { x0:34, y0:220, w:314, h:206, llMax:100, piMax:60 };
+const px = (ll) => PL.x0 + ll/PL.llMax*PL.w;
+const py = (pi) => PL.y0 - pi/PL.piMax*PL.h;
+function drawPlasticity(i){
+  const svg = $('plChart'); let h = '';
+  const clip = `<clipPath id="pc"><rect x="${PL.x0}" y="${PL.y0-PL.h}" width="${PL.w}" height="${PL.h}"/></clipPath>`;
+  h += `<defs>${clip}<pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--accent)" stroke-width="1.2" opacity=".5"/></pattern></defs>`;
+  for (let x=0;x<=100;x+=10) h += `<line x1="${px(x)}" y1="${py(0)}" x2="${px(x)}" y2="${py(60)}" stroke="var(--chart-grid)"/><text x="${px(x)}" y="${PL.y0+12}" text-anchor="middle">${x}</text>`;
+  for (let y=0;y<=60;y+=10) h += `<line x1="${px(0)}" y1="${py(y)}" x2="${px(100)}" y2="${py(y)}" stroke="var(--chart-grid)"/><text x="${PL.x0-5}" y="${py(y)+3}" text-anchor="end">${y}</text>`;
+  h += `<text x="${PL.x0+PL.w/2}" y="${PL.y0+26}" text-anchor="middle">Límite líquido, LL</text>`;
+  h += `<text transform="translate(9 ${PL.y0-PL.h/2}) rotate(-90)" text-anchor="middle">Índice de plasticidad, IP</text>`;
+  h += `<g clip-path="url(#pc)">`;
+  // Zona CL-ML
+  const zl = [[12.44,4],[25.48,4],[29.59,7],[15.78,7]].map(([l,p])=>`${px(l)},${py(p)}`).join(' ');
+  h += `<polygon points="${zl}" fill="url(#hatch)" stroke="var(--accent)" stroke-width=".6"/>`;
+  // AASHTO
+  if ($('ovAashto').checked) {
+    h += `<g stroke="var(--hi)" stroke-width="1" stroke-dasharray="4 3" fill="none"><line x1="${px(40)}" y1="${py(0)}" x2="${px(40)}" y2="${py(60)}"/><line x1="${px(0)}" y1="${py(10)}" x2="${px(100)}" y2="${py(10)}"/><line x1="${px(40)}" y1="${py(10)}" x2="${px(90)}" y2="${py(60)}"/></g>`;
+    h += `<g style="fill:var(--hi);font-size:9px"><text x="${px(30)}" y="${py(4)}" text-anchor="middle">A-4</text><text x="${px(30)}" y="${py(22)}" text-anchor="middle">A-6</text><text x="${px(70)}" y="${py(5)}" text-anchor="middle">A-5</text><text x="${px(57)}" y="${py(42)}" text-anchor="middle">A-7-6</text><text x="${px(88)}" y="${py(42)}" text-anchor="middle">A-7-5</text></g>`;
+  }
+  // Líneas A, U, LL=50
+  h += `<line x1="${px(50)}" y1="${py(0)}" x2="${px(50)}" y2="${py(60)}" stroke="var(--muted)" stroke-width="1"/>`;
+  h += `<polyline points="${px(25.48)},${py(4)} ${px(100)},${py(58.4)}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  h += `<polyline points="${px(15.78)},${py(7)} ${px(74.67)},${py(60)}" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="5 3"/>`;
+  h += `<polyline points="${px(12.44)},${py(4)} ${px(25.48)},${py(4)}" fill="none" stroke="var(--accent)" stroke-width="1"/>`;
+  h += `</g>`;
+  h += `<text x="${px(91)}" y="${py(48)}" style="fill:var(--accent)" text-anchor="middle">Línea A</text>`;
+  h += `<text x="${px(62)}" y="${py(54)}" text-anchor="middle">Línea U</text>`;
+  // Etiquetas de zona
+  const lab = (t,l,p) => `<text class="zl" x="${px(l)}" y="${py(p)}" text-anchor="middle">${t}</text>`;
+  h += lab('CL u OL',36,20) + lab('ML u OL',38,4) + lab('CH u OH',62,40) + lab('MH u OH',78,18) + `<text x="${px(21)}" y="${py(9.5)}" text-anchor="middle" style="fill:var(--accent);font-size:8px">CL-ML</text>`;
+  h += `<rect x="${PL.x0}" y="${PL.y0-PL.h}" width="${PL.w}" height="${PL.h}" fill="none" stroke="var(--line)"/>`;
+  // Punto
+  if (i.ll !== null && i.pi !== null && i.ll <= 100) {
+    const x = px(i.ll), y = py(Math.min(i.pi, 60));
+    h += `<line x1="${x}" y1="${py(0)}" x2="${x}" y2="${y}" stroke="var(--hi)" stroke-dasharray="2 2"/><line x1="${px(0)}" y1="${y}" x2="${x}" y2="${y}" stroke="var(--hi)" stroke-dasharray="2 2"/>`;
+    h += `<circle cx="${x}" cy="${y}" r="6" fill="var(--hi)" stroke="var(--surface)" stroke-width="2"/>`;
+  }
+  svg.innerHTML = h;
+}
+(function(){
+  const svg = $('plChart'); let drag = false;
+  function at(e){
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const ll = Math.round(Math.max(0, Math.min(100, (p.x-PL.x0)/PL.w*100)));
+    const pi = Math.round(Math.max(0, Math.min(60, (PL.y0-p.y)/PL.h*60)));
+    $('np').checked = false; $('ll').value = ll;
+    if (piMode === 'pi') $('pi').value = Math.min(pi, Math.max(ll-1,0)); else $('pl').value = ll - Math.min(pi, Math.max(ll-1,0));
+    update();
+  }
+  svg.addEventListener('pointerdown', e => { drag = true; svg.setPointerCapture(e.pointerId); at(e); });
+  svg.addEventListener('pointermove', e => { if (drag) at(e); });
+  svg.addEventListener('pointerup', () => drag = false);
+  svg.addEventListener('pointercancel', () => drag = false);
+})();
+
+/* ---------- Curva granulométrica ---------- */
+function drawGrad(pts, co){
+  const svg = $('gradChart'); const G = { x0:30, y0:170, w:318, h:155, dMax:100, dMin:0.05 };
+  const lx = (d) => G.x0 + (Math.log10(G.dMax) - Math.log10(d)) / (Math.log10(G.dMax) - Math.log10(G.dMin)) * G.w;
+  const ly = (p) => G.y0 - p/100*G.h;
+  let h = '';
+  // bandas de fracción
+  h += `<rect x="${G.x0}" y="${G.y0-G.h}" width="${lx(4.75)-G.x0}" height="${G.h}" fill="var(--gravel)" opacity=".08"/>`;
+  h += `<rect x="${lx(4.75)}" y="${G.y0-G.h}" width="${lx(0.075)-lx(4.75)}" height="${G.h}" fill="var(--sand)" opacity=".10"/>`;
+  h += `<rect x="${lx(0.075)}" y="${G.y0-G.h}" width="${G.x0+G.w-lx(0.075)}" height="${G.h}" fill="var(--fines)" opacity=".10"/>`;
+  [100,10,1,0.1].forEach(d => h += `<line x1="${lx(d)}" y1="${ly(0)}" x2="${lx(d)}" y2="${ly(100)}" stroke="var(--chart-grid)"/><text x="${lx(d)}" y="${G.y0+11}" text-anchor="middle">${d}</text>`);
+  for (let p=0;p<=100;p+=20) h += `<line x1="${G.x0}" y1="${ly(p)}" x2="${G.x0+G.w}" y2="${ly(p)}" stroke="var(--chart-grid)"/><text x="${G.x0-4}" y="${ly(p)+3}" text-anchor="end">${p}</text>`;
+  h += `<text x="${G.x0+G.w/2}" y="${G.y0+24}" text-anchor="middle">Abertura del tamiz (mm, escala log)</text>`;
+  h += `<text x="${lx(20)}" y="${ly(100)+10}" text-anchor="middle" style="font-size:8px">GRAVA</text><text x="${lx(0.6)}" y="${ly(100)+10}" text-anchor="middle" style="font-size:8px">ARENA</text><text x="${lx(0.06)}" y="${ly(100)+10}" text-anchor="middle" style="font-size:8px">FINOS</text>`;
+  if (cuMode === 'curve') [['D10',co.D10,10],['D30',co.D30,30],['D60',co.D60,60]].forEach(([k,d,p]) => {
+    if (d && d >= G.dMin) h += `<line x1="${G.x0}" y1="${ly(p)}" x2="${lx(d)}" y2="${ly(p)}" stroke="var(--hi)" stroke-dasharray="2 2"/><line x1="${lx(d)}" y1="${ly(p)}" x2="${lx(d)}" y2="${ly(0)}" stroke="var(--hi)" stroke-dasharray="2 2"/><text x="${lx(d)+3}" y="${ly(p)-3}" style="fill:var(--hi)">${k}</text>`;
+  });
+  const sorted = pts.slice().sort((a,b)=>b.d-a.d);
+  if (sorted.length) {
+    h += `<polyline points="${sorted.map(p=>`${lx(p.d)},${ly(p.p)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+    h += sorted.map(p => `<circle cx="${lx(p.d)}" cy="${ly(p.p)}" r="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>`).join('');
+  }
+  h += `<rect x="${G.x0}" y="${G.y0-G.h}" width="${G.w}" height="${G.h}" fill="none" stroke="var(--line)"/>`;
+  svg.innerHTML = h;
+}
+
+/* ---------- Matriz AASHTO ---------- */
+function drawMatrix(a, i){
+  const t = $('matrix');
+  const rows = [['p10',`N.º 10 (${fmt(i.p10)})`],['p40',`N.º 40 (${fmt(i.p40)})`],['p200',`N.º 200 (${fmt(i.p200)})`],['ll',`LL (${i.ll===null?'NL':fmt(i.ll)})`],['pi',`IP (${i.np?'NP':fmt(i.pi)})`]];
+  const m = a.matrix.length ? a.matrix : C.GROUPS.map(g => ({id:g.id, res:[], status:''}));
+  let h = `<thead><tr><th>Parámetro</th>${m.map(g=>`<th class="${g.id===a.group?'sel':''}">${g.id}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach(([k,lbl]) => {
+    h += `<tr><td>${lbl}</td>` + m.map(g => {
+      const cs = g.res.filter(r => r.k === k); const sel = g.id===a.group ? ' sel' : '';
+      if (!cs.length) return `<td class="na${sel}">—</td>`;
+      const ok = cs.every(c => c.ok === true), bad = cs.some(c => c.ok === false);
+      const cls = bad ? 'n' : ok ? 'y' : 'q';
+      return `<td class="${cls}${sel}">${ok?'✓ ':bad?'':'? '}${cs.map(c=>c.label).join(' y ')}</td>`;
+    }).join('') + '</tr>';
+  });
+  h += `<tr><td>Resultado</td>` + m.map(g => {
+    const sel = g.id===a.group ? ' sel' : '';
+    const txt = g.status==='pass' ? 'Asignado' : g.status==='fail' ? 'No cumple' : g.status==='unknown' ? 'Falta dato' : '·';
+    return `<td class="st ${g.status||''}${sel}">${txt}</td>`;
+  }).join('') + '</tr></tbody>';
+  t.innerHTML = h;
+}
+
+/* ---------- Borrador, ejemplos, nuevo ---------- */
+const FIELDS = ['mId','mDate','mLoc','mDepth','mObs','ll','pi','pl','cu','cc','llOven', ...SIEVES.map(s=>sid(s[1]))];
+const CHECKS = ['np','peat','organic','cobbles','ovAashto'];
+function snapshot(){ const o = {piMode, cuMode, showAll}; FIELDS.forEach(f => o[f] = $(f).value); CHECKS.forEach(c => o[c] = $(c).checked); return o; }
+function restore(o){
+  FIELDS.forEach(f => $(f).value = o[f] ?? ''); CHECKS.forEach(c => $(c).checked = !!o[c]);
+  if (o.piMode === 'pl') $('mPL').click(); else $('mPI').click();
+  if ((o.showAll && !showAll) || (!o.showAll && showAll)) $('btnMore').click();
+  if (o.cuMode === 'curve') $('cCurve').click(); else $('cMan').click();
+  update();
+}
+let draftT; function saveDraft(){ clearTimeout(draftT); draftT = setTimeout(() => store.set(K_DRAFT, snapshot()), 300); }
+
+const today = () => new Date().toISOString().slice(0,10);
+const blank = () => ({ mDate: today(), ovAashto: false });
+const EX = [
+  { t:'GM · A-7-5', d:{ mId:'Ejemplo 1', mDate:today(), mLoc:'Ejemplo: grava limosa', s4_75:'59.5', s2:'50.5', s0_425:'38', s0_075:'37', ll:'65', pi:'30', cu:'6.5', cc:'1.8' } },
+  { t:'SW · A-1-b', d:{ mId:'Ejemplo 2', mDate:today(), mLoc:'Ejemplo: arena limpia', showAll:true, cuMode:'curve', s9_5:'100', s4_75:'95', s2:'80', s0_85:'60', s0_425:'40', s0_25:'25', s0_15:'12', s0_075:'3', np:true } },
+  { t:'SC-SM · A-2-4', d:{ mId:'Ejemplo 3', mDate:today(), mLoc:'Ejemplo: arena limo-arcillosa', s4_75:'90', s2:'85', s0_425:'60', s0_075:'20', ll:'22', pi:'6' } },
+  { t:'CL-ML · A-4', d:{ mId:'Ejemplo 4', mDate:today(), mLoc:'Ejemplo: arcilla limosa', s4_75:'100', s2:'100', s0_425:'95', s0_075:'80', ll:'25', pi:'6' } },
+  { t:'CH · A-7-6', d:{ mId:'Ejemplo 5', mDate:today(), mLoc:'Ejemplo: arcilla de alta plasticidad', s4_75:'100', s2:'100', s0_425:'98', s0_075:'90', ll:'70', pi:'45' } },
+  { t:'MH · A-7-5', d:{ mId:'Ejemplo 6', mDate:today(), mLoc:'Ejemplo: limo elástico (suelo volcánico)', s4_75:'100', s2:'98', s0_425:'80', s0_075:'60', ll:'55', pi:'20' } },
+];
+$('examples').insertAdjacentHTML('beforeend', EX.map((e,k) => `<button class="chip" type="button" data-k="${k}"><b>${k+1}</b> ${esc(e.t)}</button>`).join(''));
+$('examples').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) { restore(EX[+b.dataset.k].d); toast('Ejemplo cargado'); } });
+$('btnNew').onclick = () => { restore(blank()); window.scrollTo({top:0}); toast('Formulario limpio'); };
+['ovAashto','np','peat','organic','cobbles'].forEach(id => $(id).addEventListener('change', update));
+document.querySelectorAll('input').forEach(el => { if (el.type !== 'checkbox') el.addEventListener('input', update); });
+
+/* ---------- Tema ---------- */
+function applyTheme(t){ if (t) document.documentElement.setAttribute('data-theme', t); }
+applyTheme(store.get(K_THEME, null));
+$('btnTheme').onclick = () => {
+  const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const nx = cur === 'dark' ? 'light' : 'dark'; applyTheme(nx); store.set(K_THEME, nx);
+};
+
+/* ---------- Reporte ---------- */
+function reportText(){
+  const { r, s, a } = last; const i = r.inp;
+  const L = [];
+  L.push('CLASIFICACIÓN DE SUELOS — SUCS (ASTM D2487) / AASHTO M 145');
+  L.push(`Muestra: ${$('mId').value || '—'}   Fecha: ${$('mDate').value || '—'}`);
+  if ($('mLoc').value) L.push(`Ubicación: ${$('mLoc').value}`);
+  if ($('mDepth').value) L.push(`Profundidad: ${$('mDepth').value} m`);
+  if ($('mObs').value) L.push(`Observación: ${$('mObs').value}`);
+  L.push('');
+  L.push('Granulometría (% que pasa): ' + r.pts.map(p => `${p.n} ${fmt(p.p)}`).join(' | '));
+  if (s.fr) L.push(`Fracciones: grava ${fmt(s.fr.G)} % | arena ${fmt(s.fr.S)} % | finos ${fmt(s.fr.F)} %`);
+  L.push(`Límites: LL ${i.ll===null?'—':fmt(i.ll)} | LP ${i.np?'NP':fmt(i.pl)} | IP ${i.np?'NP':fmt(i.pi)}`);
+  if (i.cu !== null || i.cc !== null) L.push(`Cu ${fmt(i.cu,2)} | Cc ${fmt(i.cc,2)}${cuMode==='curve'?' (interpolados de la curva)':''}`);
+  L.push('');
+  L.push(`SUCS: ${s.symbol} — ${s.es || 'sin clasificar'}${s.en ? ` (${s.en})` : ''}`);
+  s.steps.forEach(t => L.push('  · ' + t));
+  L.push(`AASHTO: ${a.ok ? `${a.group} (${a.gi})` : '—'}${a.ok ? ` — ${a.info.mat}; subrasante: ${a.info.sub.toLowerCase()}` : ''}`);
+  a.steps.forEach(t => L.push('  · ' + t.replace(/\n/g, '\n    ')));
+  const w = [...r.errs, ...r.warns, ...s.warn, ...a.warn];
+  if (w.length) { L.push(''); L.push('Advertencias:'); w.forEach(t => L.push('  ! ' + t)); }
+  return L.join('\n');
+}
+async function copy(text, okMsg){
+  try { await navigator.clipboard.writeText(text); toast(okMsg); $('fallbackBox').innerHTML = ''; }
+  catch(e){ $('fallbackBox').innerHTML = `<textarea class="fallback" id="fbTxt" readonly></textarea>`; $('fbTxt').value = text; $('fbTxt').select(); toast('Seleccione y copie el texto'); }
+}
+$('btnCopy').onclick = () => copy(reportText(), 'Reporte copiado');
+
+/* ---------- Historial ---------- */
+function hist(){ return store.get(K_HIST, []); }
+function renderHist(){
+  const h = hist();
+  $('hist').innerHTML = h.length ? h.map((x,k) => `<div class="hrow"><div><b>${esc(x.id||'Sin ID')}</b> <span class="mono">${esc(x.sucs)} · ${esc(x.aashto)}</span><small>${esc([x.date,x.loc,x.depth?x.depth+' m':''].filter(Boolean).join(' · '))}</small></div><div class="acts"><button type="button" data-open="${k}">Abrir</button><button type="button" data-del="${k}" aria-label="Eliminar">✕</button></div></div>`).join('')
+    : `<div class="empty">Sin muestras guardadas. Use «Guardar muestra» para crear el registro de una campaña y exportarlo como CSV.</div>`;
+}
+$('btnSave').onclick = () => {
+  const { s, a, r } = last; const i = r.inp;
+  if (!s.ok && !a.ok) { toast('No hay resultado que guardar'); return; }
+  const rec = { id:$('mId').value, date:$('mDate').value, loc:$('mLoc').value, depth:$('mDepth').value, obs:$('mObs').value,
+    p4:i.p4, p10:i.p10, p40:i.p40, p200:i.p200, ll:i.ll, pl:i.np?'NP':i.pl, pi:i.np?'NP':i.pi, cu:i.cu, cc:i.cc,
+    G:s.fr?s.fr.G:null, S:s.fr?s.fr.S:null, F:s.fr?s.fr.F:null,
+    sucs:s.symbol, nombre:s.es, nameEn:s.en, aashto:a.ok?`${a.group}(${a.gi})`:'—', snap:snapshot(), saved:new Date().toISOString() };
+  const h = hist(); const k = h.findIndex(x => x.id && x.id === rec.id);
+  if (k >= 0) h[k] = rec; else h.unshift(rec);
+  store.set(K_HIST, h); renderHist(); toast(k >= 0 ? 'Muestra actualizada' : 'Muestra guardada');
+};
+$('hist').addEventListener('click', e => {
+  const o = e.target.dataset.open, d = e.target.dataset.del; const h = hist();
+  if (o !== undefined) { restore(h[+o].snap); window.scrollTo({top:0, behavior:'smooth'}); toast('Muestra abierta'); }
+  if (d !== undefined) {
+    if (e.target.dataset.confirm) { h.splice(+d,1); store.set(K_HIST,h); renderHist(); toast('Muestra eliminada'); }
+    else { e.target.dataset.confirm = '1'; e.target.textContent = '¿Eliminar?'; setTimeout(() => { if (e.target.isConnected) { delete e.target.dataset.confirm; e.target.textContent = '✕'; } }, 3000); }
+  }
+});
+function csv(){
+  const cols = ['id','date','loc','depth','obs','p4','p10','p40','p200','G','S','F','ll','pl','pi','cu','cc','sucs','nombre','nameEn','aashto'];
+  const head = ['ID','Fecha','Ubicacion','Prof_m','Observacion','Pasa_N4','Pasa_N10','Pasa_N40','Pasa_N200','Grava_%','Arena_%','Finos_%','LL','LP','IP','Cu','Cc','SUCS','Nombre_grupo','Group_name','AASHTO'];
+  const q = (v) => { if (v===null||v===undefined) return ''; if (typeof v === 'number') v = Math.round(v*100)/100; v = String(v); return /[",;\n]/.test(v) ? `"${v.replace(/"/g,'""')}"` : v; };
+  return [head.join(','), ...hist().map(x => cols.map(c => q(x[c])).join(','))].join('\n');
+}
+$('btnCsv').onclick = () => {
+  if (!hist().length) { toast('El historial está vacío'); return; }
+  try {
+    const blob = new Blob(['﻿' + csv()], {type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `clasificacion_suelos_${today()}.csv`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast('CSV generado');
+  } catch(e){ copy(csv(), 'CSV copiado'); }
+};
+$('btnCsvCopy').onclick = () => hist().length ? copy(csv(), 'CSV copiado al portapapeles') : toast('El historial está vacío');
+
+let tT; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tT); tT = setTimeout(() => t.classList.remove('on'), 1800); }
+
+/* ---------- Inicio ---------- */
+renderHist();
+const d = store.get(K_DRAFT, null);
+restore(d || EX[0].d);
+})();
+</script>
+
+<script>
+(function(){
+  const problems = [];
+  const show = () => {
+    if (!problems.length) return;
+    const d = document.createElement('div');
+    d.className = 'msg err';
+    d.style.cssText = 'max-width:1240px;margin:12px auto 0';
+    d.innerHTML = '<b>Instalación no disponible.</b>&nbsp;' + problems.join(' ');
+    document.querySelector('main').before(d);
+  };
+  const check = (url) => fetch(url, {cache:'no-store'}).then(r => { if (r.status === 401 || r.status === 403) problems.push('El servidor bloquea «' + url + '» (' + r.status + '): el sitio tiene acceso protegido; desactive la protección o reclame el sitio en Netlify.'); else if (!r.ok) problems.push('No se encontró «' + url + '» en el servidor (' + r.status + '): súbalo junto con index.html.'); })
+    .catch(() => {});
+  window.addEventListener('load', async () => {
+    if (!('serviceWorker' in navigator)) problems.push('Este navegador no admite service workers.');
+    else if (!window.isSecureContext) problems.push('La página debe abrirse por https://, no como archivo local.');
+    else {
+      try { await navigator.serviceWorker.register('sw.js'); }
+      catch (e) { problems.push('No se pudo registrar sw.js: ' + e.message); }
+    }
+    if (navigator.onLine) await Promise.all(['manifest.webmanifest','sw.js','icon-192.png','icon-512.png','icon-maskable-512.png'].map(check));
+    show();
+  });
+})();
+</script>
+</body>
+</html>
